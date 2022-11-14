@@ -47,5 +47,8 @@ if __name__ == '__main__':
 
     xxx = not ("X" in "100.0")
     print(xxx)
-
+    tt = 0
+    if True:
+        tt = 1
+    print(tt)
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/
