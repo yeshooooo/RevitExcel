@@ -252,26 +252,26 @@ def exportExcel(dataAll,output_file_name):
     '''
     data = dataAll[0]
 
-    for ii in range(3, len(dataAll)):
+    for ii in range(1, len(dataAll)):
         # 根据getData函数导出, 1 为给水, 2 为污水, 3 为雨水, 4为路灯, 5为电力, 6 为交通信号, 7为燃气, 8 电信
         #         构造新的点数组,通过连接点号字段创建起点终点,然后遍历键为连接点号,一直往下找,直到点号不为空停止
         # 圆管跟方管分开导出
+
+
         # 连接点号属性用于简化去重
         excelJoutR = pd.DataFrame(columns=["管线点预编号", "连接点号", "长", "宽", "x1", "y1", "z1", "x2", "y2", "z2"])
         excelJoutC = pd.DataFrame(columns=["管线点预编号", "连接点号", "直径", "x1", "y1", "z1", "x2", "y2", "z2"])
-        excelOutGR = pd.DataFrame(columns=["管线点预编号", "x1", "y1", "z1", "原始连接点1", "x2", "y2", "z2", "第一段长", "第一段宽",
-                                           "原始连接点2", "x3", "y3", "z3", "第二段长", "第二段宽"])
-        excelOutGC = pd.DataFrame(columns=["管线点预编号", "x1", "y1", "z1", "原始连接点1", "x2", "y2", "z2", "第一段直径",
-                                           "原始连接点2", "x3", "y3", "z3", "第二段直径"])
+
+
+
         # 拐点--> 特征为 "拐点"或"变径"均为 双通，只提取附属物为"kong"的点
-        # 给水附属物 只有两种 检修井 和消火栓
         excelFM = pd.DataFrame(columns=["管线点预编号", "地面", "类型", "x", "y", "z"])  # 阀门
         excelJSJ = pd.DataFrame(columns=["管线点预编号", "地面", "类型", "x", "y", "z"])  # 给水井
         excelJCJ = pd.DataFrame(columns=["管线点预编号", "地面", "类型","x","y","z"]) # 检查井
         excelJXJ = pd.DataFrame(columns=["管线点预编号", "地面", "类型","x","y","z"]) # 检修井
         excelSB = pd.DataFrame(columns=["管线点预编号", "地面", "类型","x","y","z"]) # 水表
         excelSC = pd.DataFrame(columns=["管线点预编号", "地面", "类型","x","y","z"]) # 水池
-        excelXHS = pd.DataFrame(columns=["管线点预编号", "地面", "类型","x","y","z"]) # 消火栓
+        excelXHS = pd.DataFrame(columns=["管线 点预编号", "地面", "类型","x","y","z"]) # 消火栓
         excelCDC = pd.DataFrame(columns=["管线点预编号", "地面", "类型", "x", "y", "z"])  # 沉淀池
         excelHFC = pd.DataFrame(columns=["管线点预编号", "地面", "类型","x","y","z"]) # 化粪池
         excelWB = pd.DataFrame(columns=["管线点预编号", "地面", "类型","x","y","z"]) # 污篦
@@ -292,18 +292,363 @@ def exportExcel(dataAll,output_file_name):
         excelDXSK = pd.DataFrame(columns=["管线点预编号", "地面", "类型","x","y","z"]) # 电信手孔
         excelRK = pd.DataFrame(columns=["管线点预编号", "地面", "类型","x","y","z"]) # 人孔
         excelSK = pd.DataFrame(columns=["管线点预编号", "地面", "类型","x","y","z"]) # 手孔
-        count_flag = 0  # 用来标记拐点连接点的统计个数，在循环中到2后重置
-        temp_break = []  # 缓存打断点，当count_falg为2的时候，依次填入
+
+
+
+
+
         for i in range(0, len(dataAll[ii])):
-            # 矩形
-            if ("X" in dataAll[ii].loc[i, "管径或断面"]) and (dataAll[ii].loc[i, "管径或断面"] != "kong"):
+            # 矩形管线
+            if ("X" in dataAll[ii].loc[i, "管径或断面"]):
+                # 分离拐点
+                temp_break = []
                 startPoint = dataAll[ii].loc[i, "管线点预编号"]
                 linkPoint = dataAll[ii].loc[i, "连接点号"]
                 size = dataAll[ii].loc[i, "管径或断面"].split("X")
                 size = [float(s) for s in size]
                 z1 = float(dataAll[ii].loc[i, "地面"] - dataAll[ii].loc[i, "埋深"]) + size[1] / 2.0 / 1000.0
-                if ((dataAll[ii].loc[i,"特征"] == "拐点" and dataAll[ii].loc[i, "附属物"] == "kong") or
-                    ((dataAll[ii].loc[i,"特征"] == "变径" and dataAll[ii].loc[i, "附属物"] == "kong")) ):
+
+                for j in range(0,len(data)):
+                    if (data.loc[j, "管线点预编号"] == linkPoint and data.loc[j, "连接点号"] == startPoint) and (data.loc[j, "管径或断面"] == dataAll[ii].loc[i, "管径或断面"]):
+                        size_raw = data.loc[j, "管径或断面"].split("X")
+                        size_rr = [float(s) for s in size_raw]
+                        z2 = float(data.loc[j, "地面"] - data.loc[j, "埋深"]) + size_rr[1] / 2.0 / 1000.0
+
+                        x1 = dataAll[ii].loc[i, "X"]
+                        y1 = dataAll[ii].loc[i, "Y"]
+                        x2 = data.loc[j, "X"]
+                        y2 = data.loc[j, "Y"]
+                        x_mid = (x1 + x2) / 2.00
+                        y_mid = (y1 + y2) / 2.00
+                        z_mid = (z1 + z2) / 2.00
+                        p1 = data.loc[j, "管线点预编号"]
+                        l1 = size_rr[0]
+                        w1 = size_rr[1]
+                        temp = pd.DataFrame(
+                            {"管线点预编号": startPoint, "连接点号": p1, "长": l1,
+                             "宽": w1,
+                             "x1": x1, "y1": y1, "z1": z1,
+                             "x2": x_mid, "y2": y_mid, "z2": z_mid}, index=[0])
+                        excelJoutR = pd.concat([excelJoutR, temp], ignore_index=True)
+
+
+            # 圆形管线
+            if not ("X" in dataAll[ii].loc[i, "管径或断面"]):
+                startPoint = dataAll[ii].loc[i, "管线点预编号"]
+                linkPoint = dataAll[ii].loc[i, "连接点号"]
+                ## 设置标记用于确定是否添加,每轮重置为True
+                temp_break = []
+                size = float(dataAll[ii].loc[i, "管径或断面"])
+                z1 = float(dataAll[ii].loc[i, "地面"] - dataAll[ii].loc[i, "埋深"]) + size / 2.0 / 1000.0
+                for j in range(0, len(data)):
+
+
+                    if (data.loc[j, "管线点预编号"] == linkPoint and data.loc[j, "连接点号"] == startPoint) and (data.loc[j, "管径或断面"] == dataAll[ii].loc[i, "管径或断面"]):
+                        size_rc = float(data.loc[j, "管径或断面"])
+                        z2 = float(data.loc[j, "地面"] - data.loc[j, "埋深"]) + size / 2.0 / 1000.0
+
+                        x1 = dataAll[ii].loc[i, "X"]
+                        y1 = dataAll[ii].loc[i, "Y"]
+
+                        x2 = data.loc[j, "X"]
+                        y2 = data.loc[j, "Y"]
+
+                        x_mid = (x1 + x2) / 2.00
+                        y_mid = (y1 + y2) / 2.00
+                        z_mid = (z1 + z2) / 2.00
+
+                        temp0 = pd.DataFrame(
+                            {"管线点预编号": startPoint, "连接点号": data.loc[j, "管线点预编号"], "直径": size,
+                             "x1": x1, "y1": y1, "z1": z1,
+                             "x2": x_mid, "y2": y_mid, "z2": z_mid}, index=[0])
+                        excelJoutC = pd.concat([excelJoutC, temp0], ignore_index=True)
+
+            ## 添加附属物
+            # 1
+            label = "阀门"
+            if label in dataAll[ii].loc[i, "附属物"]:
+                z = z1
+                temp1 = pd.DataFrame(
+                    {"管线点预编号": dataAll[ii].loc[i, "管线点预编号"], "地面": dataAll[ii].loc[i, "地面"],
+                     "类型": dataAll[ii].loc[i, "附属物"], "x": dataAll[ii].loc[i, "X"],
+                     "y": dataAll[ii].loc[i, "Y"], "z": z},
+                    index=[0])
+                excelFM = pd.concat([excelFM, temp1], ignore_index=True)
+            # 2
+            label = "给水井"
+            if label in dataAll[ii].loc[i, "附属物"]:
+                z = z1
+                temp1 = pd.DataFrame(
+                    {"管线点预编号": dataAll[ii].loc[i, "管线点预编号"], "地面": dataAll[ii].loc[i, "地面"],
+                     "类型": dataAll[ii].loc[i, "附属物"], "x": dataAll[ii].loc[i, "X"],
+                     "y": dataAll[ii].loc[i, "Y"], "z": z},
+                    index=[0])
+                excelJSJ = pd.concat([excelJSJ, temp1], ignore_index=True)
+            # 3
+            label = "检查井"
+            if label in dataAll[ii].loc[i, "附属物"]:
+                z = z1
+                temp1 = pd.DataFrame(
+                    {"管线点预编号": dataAll[ii].loc[i, "管线点预编号"], "地面": dataAll[ii].loc[i, "地面"],
+                     "类型": dataAll[ii].loc[i, "附属物"], "x": dataAll[ii].loc[i, "X"],
+                     "y": dataAll[ii].loc[i, "Y"], "z": z},
+                    index=[0])
+                excelJCJ = pd.concat([excelJCJ, temp1], ignore_index=True)
+            # 4
+            label = "检修井"
+            if label in dataAll[ii].loc[i, "附属物"]:
+                z = z1
+                temp1 = pd.DataFrame(
+                    {"管线点预编号": dataAll[ii].loc[i, "管线点预编号"], "地面": dataAll[ii].loc[i, "地面"],
+                     "类型": dataAll[ii].loc[i, "附属物"], "x": dataAll[ii].loc[i, "X"],
+                     "y": dataAll[ii].loc[i, "Y"], "z": z},
+                    index=[0])
+                excelJXJ = pd.concat([excelJXJ, temp1], ignore_index=True)
+
+            # 5
+            label = "水表"
+            if label in dataAll[ii].loc[i, "附属物"]:
+                z = z1
+                temp1 = pd.DataFrame(
+                    {"管线点预编号": dataAll[ii].loc[i, "管线点预编号"], "地面": dataAll[ii].loc[i, "地面"],
+                     "类型": dataAll[ii].loc[i, "附属物"], "x": dataAll[ii].loc[i, "X"],
+                     "y": dataAll[ii].loc[i, "Y"], "z": z},
+                    index=[0])
+                excelSB = pd.concat([excelSB, temp1], ignore_index=True)
+
+            # 6
+            label = "水池"
+            if label in dataAll[ii].loc[i, "附属物"]:
+                z = z1
+                temp1 = pd.DataFrame(
+                    {"管线点预编号": dataAll[ii].loc[i, "管线点预编号"], "地面": dataAll[ii].loc[i, "地面"],
+                     "类型": dataAll[ii].loc[i, "附属物"], "x": dataAll[ii].loc[i, "X"],
+                     "y": dataAll[ii].loc[i, "Y"], "z": z},
+                    index=[0])
+                excelSC = pd.concat([excelSC, temp1], ignore_index=True)
+
+            # 7
+            label = "消火栓"
+            if label in dataAll[ii].loc[i, "附属物"]:
+                z = z1
+                temp1 = pd.DataFrame(
+                    {"管线点预编号": dataAll[ii].loc[i, "管线点预编号"], "地面": dataAll[ii].loc[i, "地面"],
+                     "类型": dataAll[ii].loc[i, "附属物"], "x": dataAll[ii].loc[i, "X"],
+                     "y": dataAll[ii].loc[i, "Y"], "z": z},
+                    index=[0])
+                excelXHS = pd.concat([excelXHS, temp1], ignore_index=True)
+            # 8
+            label = "沉淀池"
+            if label in dataAll[ii].loc[i, "附属物"]:
+                z = z1
+                temp1 = pd.DataFrame(
+                    {"管线点预编号": dataAll[ii].loc[i, "管线点预编号"], "地面": dataAll[ii].loc[i, "地面"],
+                     "类型": dataAll[ii].loc[i, "附属物"], "x": dataAll[ii].loc[i, "X"],
+                     "y": dataAll[ii].loc[i, "Y"], "z": z},
+                    index=[0])
+                excelCDC = pd.concat([excelCDC, temp1], ignore_index=True)
+
+            # 9
+            label = "化粪池"
+            if label in dataAll[ii].loc[i, "附属物"]:
+                z = z1
+                temp1 = pd.DataFrame(
+                    {"管线点预编号": dataAll[ii].loc[i, "管线点预编号"], "地面": dataAll[ii].loc[i, "地面"],
+                     "类型": dataAll[ii].loc[i, "附属物"], "x": dataAll[ii].loc[i, "X"],
+                     "y": dataAll[ii].loc[i, "Y"], "z": z},
+                    index=[0])
+                excelHFC = pd.concat([excelHFC, temp1], ignore_index=True)
+            # 10
+            label = "污篦"
+            if label in dataAll[ii].loc[i, "附属物"]:
+                z = z1
+                temp1 = pd.DataFrame(
+                    {"管线点预编号": dataAll[ii].loc[i, "管线点预编号"], "地面": dataAll[ii].loc[i, "地面"],
+                     "类型": dataAll[ii].loc[i, "附属物"], "x": dataAll[ii].loc[i, "X"],
+                     "y": dataAll[ii].loc[i, "Y"], "z": z},
+                    index=[0])
+                excelWB = pd.concat([excelWB, temp1], ignore_index=True)
+
+            # 11
+            label = "雨篦"
+            if label in dataAll[ii].loc[i, "附属物"]:
+                z = z1
+                temp1 = pd.DataFrame(
+                    {"管线点预编号": dataAll[ii].loc[i, "管线点预编号"], "地面": dataAll[ii].loc[i, "地面"],
+                     "类型": dataAll[ii].loc[i, "附属物"], "x": dataAll[ii].loc[i, "X"],
+                     "y": dataAll[ii].loc[i, "Y"], "z": z},
+                    index=[0])
+                excelYB = pd.concat([excelYB, temp1], ignore_index=True)
+
+            # 12
+            label = "接线箱"
+            if label in dataAll[ii].loc[i, "附属物"]:
+                z = z1
+                temp1 = pd.DataFrame(
+                    {"管线点预编号": dataAll[ii].loc[i, "管线点预编号"], "地面": dataAll[ii].loc[i, "地面"],
+                     "类型": dataAll[ii].loc[i, "附属物"], "x": dataAll[ii].loc[i, "X"],
+                     "y": dataAll[ii].loc[i, "Y"], "z": z},
+                    index=[0])
+                excelJXX = pd.concat([excelJXX, temp1], ignore_index=True)
+            # 13
+            label = "控制柜"
+            if label in dataAll[ii].loc[i, "附属物"]:
+                z = z1
+                temp1 = pd.DataFrame(
+                    {"管线点预编号": dataAll[ii].loc[i, "管线点预编号"], "地面": dataAll[ii].loc[i, "地面"],
+                     "类型": dataAll[ii].loc[i, "附属物"], "x": dataAll[ii].loc[i, "X"],
+                     "y": dataAll[ii].loc[i, "Y"], "z": z},
+                    index=[0])
+                excelKZG = pd.concat([excelKZG, temp1], ignore_index=True)
+
+            # 14
+            label = "路灯"
+            if label in dataAll[ii].loc[i, "附属物"]:
+                z = z1
+                temp1 = pd.DataFrame(
+                    {"管线点预编号": dataAll[ii].loc[i, "管线点预编号"], "地面": dataAll[ii].loc[i, "地面"],
+                     "类型": dataAll[ii].loc[i, "附属物"], "x": dataAll[ii].loc[i, "X"],
+                     "y": dataAll[ii].loc[i, "Y"], "z": z},
+                    index=[0])
+                excelLD = pd.concat([excelLD, temp1], ignore_index=True)
+
+            # 15
+            label = "配电箱"
+            if label in dataAll[ii].loc[i, "附属物"]:
+                z = z1
+                temp1 = pd.DataFrame(
+                    {"管线点预编号": dataAll[ii].loc[i, "管线点预编号"], "地面": dataAll[ii].loc[i, "地面"],
+                     "类型": dataAll[ii].loc[i, "附属物"], "x": dataAll[ii].loc[i, "X"],
+                     "y": dataAll[ii].loc[i, "Y"], "z": z},
+                    index=[0])
+                excelPDX = pd.concat([excelPDX, temp1], ignore_index=True)
+
+            # 16
+            label = "充电桩"
+            if label in dataAll[ii].loc[i, "附属物"]:
+                z = z1
+                temp1 = pd.DataFrame(
+                    {"管线点预编号": dataAll[ii].loc[i, "管线点预编号"], "地面": dataAll[ii].loc[i, "地面"],
+                     "类型": dataAll[ii].loc[i, "附属物"], "x": dataAll[ii].loc[i, "X"],
+                     "y": dataAll[ii].loc[i, "Y"], "z": z},
+                    index=[0])
+                excelCDZ = pd.concat([excelCDZ, temp1], ignore_index=True)
+
+            # 17
+            label = "配电房"
+            if label in dataAll[ii].loc[i, "附属物"]:
+                z = z1
+                temp1 = pd.DataFrame(
+                    {"管线点预编号": dataAll[ii].loc[i, "管线点预编号"], "地面": dataAll[ii].loc[i, "地面"],
+                     "类型": dataAll[ii].loc[i, "附属物"], "x": dataAll[ii].loc[i, "X"],
+                     "y": dataAll[ii].loc[i, "Y"], "z": z},
+                    index=[0])
+                excelPDF = pd.concat([excelPDF, temp1], ignore_index=True)
+            # 18
+            label = "上杆"
+            if label in dataAll[ii].loc[i, "附属物"]:
+                z = z1
+                temp1 = pd.DataFrame(
+                    {"管线点预编号": dataAll[ii].loc[i, "管线点预编号"], "地面": dataAll[ii].loc[i, "地面"],
+                     "类型": dataAll[ii].loc[i, "附属物"], "x": dataAll[ii].loc[i, "X"],
+                     "y": dataAll[ii].loc[i, "Y"], "z": z},
+                    index=[0])
+                excelSG = pd.concat([excelSG, temp1], ignore_index=True)
+            # 19
+            label = "摄像头"
+            if label in dataAll[ii].loc[i, "附属物"]:
+                z = z1
+                temp1 = pd.DataFrame(
+                    {"管线点预编号": dataAll[ii].loc[i, "管线点预编号"], "地面": dataAll[ii].loc[i, "地面"],
+                     "类型": dataAll[ii].loc[i, "附属物"], "x": dataAll[ii].loc[i, "X"],
+                     "y": dataAll[ii].loc[i, "Y"], "z": z},
+                    index=[0])
+                excelSXT = pd.concat([excelSXT, temp1], ignore_index=True)
+            # 20
+            label = "信号灯"
+            if label in dataAll[ii].loc[i, "附属物"]:
+                z = z1
+                temp1 = pd.DataFrame(
+                    {"管线点预编号": dataAll[ii].loc[i, "管线点预编号"], "地面": dataAll[ii].loc[i, "地面"],
+                     "类型": dataAll[ii].loc[i, "附属物"], "x": dataAll[ii].loc[i, "X"],
+                     "y": dataAll[ii].loc[i, "Y"], "z": z},
+                    index=[0])
+                excelXHD = pd.concat([excelXHD, temp1], ignore_index=True)
+
+            # 21
+            label = "红绿灯"
+            if label in dataAll[ii].loc[i, "附属物"]:
+                z = z1
+                temp1 = pd.DataFrame(
+                    {"管线点预编号": dataAll[ii].loc[i, "管线点预编号"], "地面": dataAll[ii].loc[i, "地面"],
+                     "类型": dataAll[ii].loc[i, "附属物"], "x": dataAll[ii].loc[i, "X"],
+                     "y": dataAll[ii].loc[i, "Y"], "z": z},
+                    index=[0])
+                excelHLD = pd.concat([excelHLD, temp1], ignore_index=True)
+
+            # 22
+            label = "盖堵"
+            if label in dataAll[ii].loc[i, "附属物"]:
+                z = z1
+                temp1 = pd.DataFrame(
+                    {"管线点预编号": dataAll[ii].loc[i, "管线点预编号"], "地面": dataAll[ii].loc[i, "地面"],
+                     "类型": dataAll[ii].loc[i, "附属物"], "x": dataAll[ii].loc[i, "X"],
+                     "y": dataAll[ii].loc[i, "Y"], "z": z},
+                    index=[0])
+                excelGD = pd.concat([excelGD, temp1], ignore_index=True)
+            # 23
+            label = "凝水缸"
+            if label in dataAll[ii].loc[i, "附属物"]:
+                z = z1
+                temp1 = pd.DataFrame(
+                    {"管线点预编号": dataAll[ii].loc[i, "管线点预编号"], "地面": dataAll[ii].loc[i, "地面"],
+                     "类型": dataAll[ii].loc[i, "附属物"], "x": dataAll[ii].loc[i, "X"],
+                     "y": dataAll[ii].loc[i, "Y"], "z": z},
+                    index=[0])
+                excelNSG = pd.concat([excelNSG, temp1], ignore_index=True)
+            # 24
+            label = "电信人孔"
+            if label in dataAll[ii].loc[i, "附属物"]:
+                z = z1
+                temp1 = pd.DataFrame(
+                    {"管线点预编号": dataAll[ii].loc[i, "管线点预编号"], "地面": dataAll[ii].loc[i, "地面"],
+                     "类型": dataAll[ii].loc[i, "附属物"], "x": dataAll[ii].loc[i, "X"],
+                     "y": dataAll[ii].loc[i, "Y"], "z": z},
+                    index=[0])
+                excelDXRK = pd.concat([excelDXRK, temp1], ignore_index=True)
+            # 25
+            label = "电信手孔"
+            if label in dataAll[ii].loc[i, "附属物"]:
+                z = z1
+                temp1 = pd.DataFrame(
+                    {"管线点预编号": dataAll[ii].loc[i, "管线点预编号"], "地面": dataAll[ii].loc[i, "地面"],
+                     "类型": dataAll[ii].loc[i, "附属物"], "x": dataAll[ii].loc[i, "X"],
+                     "y": dataAll[ii].loc[i, "Y"], "z": z},
+                    index=[0])
+                excelDXSK = pd.concat([excelDXSK, temp1], ignore_index=True)
+            # 26
+            label = "人孔"
+            if label in dataAll[ii].loc[i, "附属物"]:
+                z = z1
+                temp1 = pd.DataFrame(
+                    {"管线点预编号": dataAll[ii].loc[i, "管线点预编号"], "地面": dataAll[ii].loc[i, "地面"],
+                     "类型": dataAll[ii].loc[i, "附属物"], "x": dataAll[ii].loc[i, "X"],
+                     "y": dataAll[ii].loc[i, "Y"], "z": z},
+                    index=[0])
+                excelRK = pd.concat([excelRK, temp1], ignore_index=True)
+            # 27
+            label = "手孔"
+            if label in dataAll[ii].loc[i, "附属物"]:
+                z = z1
+                temp1 = pd.DataFrame(
+                    {"管线点预编号": dataAll[ii].loc[i, "管线点预编号"], "地面": dataAll[ii].loc[i, "地面"],
+                     "类型": dataAll[ii].loc[i, "附属物"], "x": dataAll[ii].loc[i, "X"],
+                     "y": dataAll[ii].loc[i, "Y"], "z": z},
+                    index=[0])
+                excelSK = pd.concat([excelSK, temp1], ignore_index=True)
+
+
+
 
 
 

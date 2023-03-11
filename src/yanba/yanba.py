@@ -1,4 +1,5 @@
 import pandas as pd
+# ------------------ 最终为此版本--------------------------------
 # 原始数据格式化
 # 备注：方圆相连也会出错，手动增加附属物避免
 # 还是采用的下面的玄学，把报错之前的给复制填充下序号，如报错5Y809，打印缓存和flag中的是5Y776，则把5Y776下面的点号复制一遍即可，很玄学
@@ -224,6 +225,7 @@ def getData(raw_data_path,outputfile,isOffeset = True):
         dataD["X"] = dataD["X"].sub(middleX)
         dataD["Y"] = dataD["Y"].sub(middleY)
         print("--------------------偏移sheet写入完成---------------------------------")
+        print(data)
 
 
         # return data, dataJ, dataW, dataY, dataLD, dataL, dataXH, dataR, dataDT,dataD
@@ -252,7 +254,9 @@ def exportExcel(dataAll,output_file_name):
     '''
     data = dataAll[0]
 
-    for ii in range(4, len(dataAll)):
+    for ii in range(1, len(dataAll)):
+    # for ii in range(8, len(dataAll)):
+    # for ii in range(6, 7):
         # 根据getData函数导出, 1 为给水, 2 为污水, 3 为雨水, 4为路灯, 5为电力, 6 为交通信号, 7为燃气, 8 电信
 
 
@@ -279,7 +283,7 @@ def exportExcel(dataAll,output_file_name):
         excelJXJ = pd.DataFrame(columns=["管线点预编号", "地面", "类型","x","y","z"]) # 检修井
         excelSB = pd.DataFrame(columns=["管线点预编号", "地面", "类型","x","y","z"]) # 水表
         excelSC = pd.DataFrame(columns=["管线点预编号", "地面", "类型","x","y","z"]) # 水池
-        excelXHS = pd.DataFrame(columns=["管线点预编号", "地面", "类型","x","y","z"]) # 消火栓
+        excelXHS = pd.DataFrame(columns=["管线 点预编号", "地面", "类型","x","y","z"]) # 消火栓
         excelCDC = pd.DataFrame(columns=["管线点预编号", "地面", "类型", "x", "y", "z"])  # 沉淀池
         excelHFC = pd.DataFrame(columns=["管线点预编号", "地面", "类型","x","y","z"]) # 化粪池
         excelWB = pd.DataFrame(columns=["管线点预编号", "地面", "类型","x","y","z"]) # 污篦
@@ -302,9 +306,11 @@ def exportExcel(dataAll,output_file_name):
         excelSK = pd.DataFrame(columns=["管线点预编号", "地面", "类型","x","y","z"]) # 手孔
 
 
-        count_flag = 0  # 用来标记拐点连接点的统计个数，在循环中到2后重置
-        temp_break = []  # 缓存打断点，当count_falg为2的时候，依次填入
+        # count_flag = 0  # 用来标记拐点连接点的统计个数，在循环中到2后重置
+        # temp_break = []  # 缓存打断点，当count_falg为2的时候，依次填入
         for i in range(0, len(dataAll[ii])):
+        # for i in range(0, len(dataAll[ii])):
+        # for i in range(8, 9):
 
             # # 矩形管线
             # 存在float 100.0 大于4的情况,改为是否包含X
@@ -312,10 +318,10 @@ def exportExcel(dataAll,output_file_name):
                 startPoint = dataAll[ii].loc[i, "管线点预编号"]
                 linkPoint = dataAll[ii].loc[i, "连接点号"]
                 ## 设置标记用于确定是否添加,每轮重置为True
-                print("开始前")
-                print(dataAll[ii].loc[i, "管线点预编号"])
-                print(dataAll[ii].loc[i, "管径或断面"])
-                print("开始前缓存中的数据",temp_break)
+                # print("开始前")
+                # print(dataAll[ii].loc[i, "管线点预编号"])
+                # print(dataAll[ii].loc[i, "管径或断面"])
+                # print("开始前缓存中的数据",temp_break)
                 # print("---- 序号")
                 # print(dataAll[ii].loc[i, "管线点预编号"])
 
@@ -323,28 +329,30 @@ def exportExcel(dataAll,output_file_name):
                 size = [float(s) for s in size]
                 z1 = float(dataAll[ii].loc[i, "地面"] - dataAll[ii].loc[i, "埋深"]) + size[1] / 2.0 / 1000.0
 
-                # count_flag = 0 # 用来标记拐点连接点的统计个数，在循环中到2后重置
-                # temp_break = [] # 缓存打断点，当count_falg为2的时候，依次填入
+                count_flag = 0 # 用来标记拐点连接点的统计个数，在循环中到2后重置
+                temp_break = [] # 缓存打断点，当count_falg为2的时候，依次填入
                 ## 本套数据中无连接方管和圆管同时又无附属物的三通
                 # 分离拐点
                 # 分离 只分离是拐点或者变径 同时附属物为空的
-                if ((dataAll[ii].loc[i,"特征"] == "拐点" and dataAll[ii].loc[i, "附属物"] == "kong") or
-                    ((dataAll[ii].loc[i,"特征"] == "变径" and dataAll[ii].loc[i, "附属物"] == "kong")) ):
-
+                if (dataAll[ii].loc[i,"特征"] == "拐点" and dataAll[ii].loc[i, "附属物"] == "kong"):
+                    print("开始查找")
                     for j in range(0, len(data)):
-                        if data.loc[j, "管线点预编号"] == linkPoint and data.loc[j, "连接点号"] == startPoint:
-                            print("---- 链接管线序号")
-                            # print(dataAll[ii].loc[i, "管线点预编号"])
-                            # print(data.loc[j, "管线点预编号"])
-                            print("-----------打印缓存和flag")
-                            print(temp_break)
-                            print(count_flag)
-                            # 连接点管类型分为矩形和圆形
 
+                        # if (data.loc[j, "管线点预编号"] == linkPoint and data.loc[j, "连接点号"] == startPoint) and ("X" in data.loc[j, "管径或断面"]):
+                        if ( data.loc[j, "连接点号"] == startPoint) and ("X" in data.loc[j, "管径或断面"]):
+                            # print("---- 链接管线序号")
+                            # # print(dataAll[ii].loc[i, "管线点预编号"])
+                            print("此点编号：", startPoint)
+                            print("找到的点的编号",data.loc[j, "管线点预编号"])
+                            # print("-----------打印缓存和flag")
+                            # print(temp_break)
+                            # print(count_flag)
+                            # 连接点管类型分为矩形和圆形
+                            # count_flag = count_flag + 1
                             # 每根管都会有两个与他相连的
                             # 如果连接管道为矩形才做处理， 按照龙坤的说法，方连方，圆连圆
                             if count_flag < 2:
-                                print("________flag小于2")
+                                print("________识别出flag小于2")
                                 size_raw = data.loc[j, "管径或断面"].split("X")
                                 size_rr = [float(s) for s in size_raw]
                                 z2 = float(data.loc[j, "地面"] - data.loc[j, "埋深"]) + size_rr[1] / 2.0 / 1000.0
@@ -366,34 +374,40 @@ def exportExcel(dataAll,output_file_name):
                                 temp_break.append(z_mid)
                                 temp_break.append(size_rr[0])
                                 temp_break.append(size_rr[1])
-                                print(size_rr)
-                                print(temp_break)
+                                # print(size_rr)
+                                # print(temp_break)
                                 count_flag = count_flag + 1
-                                if count_flag == 2:
-                                    count_flag = 0
-                                    print(temp_break)
-                                    print("------出错的是111---------")
-                                    print(startPoint)
-                                    # print(excelOutGR)
-                                    tmp = pd.DataFrame(
-                                        {"管线点预编号": startPoint,
-                                         "x1": dataAll[ii].loc[i, "X"], "y1": dataAll[ii].loc[i, "Y"], "z1": z1,
-                                         "原始连接点1": temp_break[0],
-                                         "x2": temp_break[1], "y2": temp_break[2], "z2": temp_break[3],
-                                         "第一段长": temp_break[4], "第一段宽": temp_break[5],
-                                         "原始连接点2": temp_break[6],
-                                         "x3": temp_break[7], "y3": temp_break[8], "z3": temp_break[9],
-                                         "第二段长": temp_break[10], "第二段宽": temp_break[11]
-                                         },
-                                        index=[0]
-                                    )
-                                    excelOutGR = pd.concat([excelOutGR, tmp], ignore_index=True)
-
-                                    # 清空缓存
-                                    temp_break = []
-                                    print("___________________test2")
-                                    print(temp_break)
-                                    break
+                                print("count_flag = ",count_flag)
+                            if count_flag == 2:
+                                count_flag = 0
+                                print(temp_break)
+                                print("------成功进入拐点---------")
+                                print(startPoint)
+                                # print(excelOutGR)
+                                tmp = pd.DataFrame(
+                                    {"管线点预编号": startPoint,
+                                     "x1": dataAll[ii].loc[i, "X"], "y1": dataAll[ii].loc[i, "Y"], "z1": z1,
+                                     "原始连接点1": temp_break[0],
+                                     "x2": temp_break[1], "y2": temp_break[2], "z2": temp_break[3],
+                                     "第一段长": temp_break[4], "第一段宽": temp_break[5],
+                                     "原始连接点2": temp_break[6],
+                                     "x3": temp_break[7], "y3": temp_break[8], "z3": temp_break[9],
+                                     "第二段长": temp_break[10], "第二段宽": temp_break[11]
+                                     },
+                                    index=[0]
+                                )
+                                excelOutGR = pd.concat([excelOutGR, tmp], ignore_index=True)
+                                print("“矩形拐点")
+                                print(excelOutGR)
+                                # 清空缓存
+                                temp_break = []
+                                print("清空矩形拐点缓存")
+                                # print(temp_break)
+                                # break
+                    # 这里一定要清空一次缓存，不然，新的点里缓存里面会有东西
+                    print("结束查找")
+                    temp_break = []
+                    count_flag = 0
 
 
 
@@ -707,26 +721,27 @@ def exportExcel(dataAll,output_file_name):
                 size = float(dataAll[ii].loc[i, "管径或断面"])
                 z1 = float(dataAll[ii].loc[i, "地面"] - dataAll[ii].loc[i, "埋深"]) + size / 2.0 / 1000.0
 
-                # count_flag = 0 # 用来标记拐点连接点的统计个数，在循环中到2后重置
-                # temp_break = [] # 缓存打断点，当count_falg为2的时候，依次填入
+                count_flag = 0 # 用来标记拐点连接点的统计个数，在循环中到2后重置
+                temp_break = [] # 缓存打断点，当count_falg为2的时候，依次填入
                 ## 本套数据中无连接方管和圆管同时又无附属物的三通
                 # 分离拐点
                 # 分离 只分离是拐点或者变径 同时附属物为空的
-                if ((dataAll[ii].loc[i,"特征"] == "拐点" and dataAll[ii].loc[i, "附属物"] == "kong") or
-                    ((dataAll[ii].loc[i,"特征"] == "变径" and dataAll[ii].loc[i, "附属物"] == "kong")) ):
-
+                if (dataAll[ii].loc[i,"特征"] == "拐点" and dataAll[ii].loc[i, "附属物"] == "kong"):
+                    print("开始查找圆形拐点")
                     for j in range(0, len(data)):
 
 
-                        if data.loc[j, "管线点预编号"] == linkPoint and data.loc[j, "连接点号"] == startPoint:
+                        if data.loc[j, "连接点号"] == startPoint and (not ("X" in str(data.loc[j, "管径或断面"]))):
 
                             # 连接点管类型分为矩形和圆形
-
+                            print("此点编号：", startPoint)
+                            print("找到的点的编号",data.loc[j, "管线点预编号"])
                             # 每根管都会有两个与他相连的
                             # 如果连接管道为矩形才做处理， 按照龙坤的说法，方连方，圆连圆
                             # print(data.loc[j, "管线点预编号"])
                             # print(data.loc[j])
                             # if ("X" in data.loc[j, "管径或断面"]) and (data.loc[j, "管径或断面"] != "kong"):
+
                             if count_flag < 2 :
 
                                 size_rc = float(data.loc[j,"管径或断面"])
@@ -750,39 +765,43 @@ def exportExcel(dataAll,output_file_name):
                                 temp_break.append(size_rc)
                                 # print(temp_break)
                                 # print(count_flag)
-                                count_flag = count_flag + 1
+                                count_flag = count_flag + 1 # 一定要在这+1 不然缓存里少存东西
                                 # if (startPoint == "LD7"):
                                 #     print("--------------------LD7---------", temp_break)
                                 # print(count_flag)
                                 # 这里必须写在里面，否则，当=2 时是在下一管线才能判断出，这时候有圆有方的表格就会报错
-                                if count_flag == 2 :
-
-                                    # print("------  圆形")
-                                    # print(temp_break)
-                                    tmp = pd.DataFrame(
-                                        {"管线点预编号": startPoint,
-                                         "x1": dataAll[ii].loc[i, "X"], "y1": dataAll[ii].loc[i, "Y"], "z1": z1,
-                                         "原始连接点1": temp_break[0],
-                                         "x2": temp_break[1], "y2": temp_break[2], "z2": temp_break[3],
-                                         "第一段直径": temp_break[4],
-                                         "原始连接点2": temp_break[5],
-                                         "x3": temp_break[6], "y3": temp_break[7], "z3": temp_break[8],
-                                         "第二段直径": temp_break[9]
-                                         },
-                                        index=[0]
-                                    )
-                                    excelOutGC = pd.concat([excelOutGC, tmp], ignore_index=True)
-
-                                    # 清空缓存
-                                    temp_break = []
-                                    # print("----圆形加完后temp_break")
-                                    # print(temp_break)
-                                    count_flag = 0
-                                    if (startPoint == "LD7") :
-                                        print("--------------------LD7---------",temp_break)
-                                    # print("-----圆形完后count_flag： ", count_flag)
-                                    break
-
+                            if count_flag == 2 :
+                                print(temp_break)
+                                # print("------  圆形")
+                                # print(temp_break)
+                                tmp = pd.DataFrame(
+                                    {"管线点预编号": startPoint,
+                                     "x1": dataAll[ii].loc[i, "X"], "y1": dataAll[ii].loc[i, "Y"], "z1": z1,
+                                     "原始连接点1": temp_break[0],
+                                     "x2": temp_break[1], "y2": temp_break[2], "z2": temp_break[3],
+                                     "第一段直径": temp_break[4],
+                                     "原始连接点2": temp_break[5],
+                                     "x3": temp_break[6], "y3": temp_break[7], "z3": temp_break[8],
+                                     "第二段直径": temp_break[9]
+                                     },
+                                    index=[0]
+                                )
+                                excelOutGC = pd.concat([excelOutGC, tmp], ignore_index=True)
+                                # 清空缓存
+                                temp_break = []
+                                # print("----圆形加完后temp_break")
+                                # print(temp_break)
+                                count_flag = 0
+                                # if (startPoint == "LD7") :
+                                #     print("--------------------LD7---------",temp_break)
+                                # # print("-----圆形完后count_flag： ", count_flag)
+                                # break
+                    # 这里一定要清空缓存和计数，不然会出错
+                    print("结束查找圆形拐点")
+                    temp_break = []
+                    # print("----圆形加完后temp_break")
+                    # print(temp_break)
+                    count_flag = 0
                 else:
                     isNew = True
                     size = float(dataAll[ii].loc[i, "管径或断面"])
@@ -1307,8 +1326,8 @@ def exportExcel(dataAll,output_file_name):
                     excelJXX.to_excel(writer, sheet_name="电信接线箱", index=False)
                 if not excelRK.empty:
                     excelRK.to_excel(writer, sheet_name="电信人孔", index=False)
-                if not excelSKJ.empty:
-                    excelSKJ.to_excel(writer, sheet_name="电信手孔", index=False)
+                if not excelSK.empty:
+                    excelSK.to_excel(writer, sheet_name="电信手孔", index=False)
                 if not excelSXT.empty:
                     excelSXT.to_excel(writer, sheet_name="电信摄像头", index=False)
                 if not excelOutGR.empty:
@@ -1318,7 +1337,7 @@ def exportExcel(dataAll,output_file_name):
             print("----------------------8 电信完成-----------------------------------------------------------------------------------------------------------------")
 
 if __name__ == '__main__':
-    path = r"..\..\data\origin\盐坝预处理删除空白.xls"
+    path = r"..\..\data\origin\盐坝预处理改进.xls"
     outpath = r"..\..\data\out\盐坝处理后.xlsx"
     inputdata = getData(path,outpath)
 
